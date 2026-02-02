@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valentine's Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.emailjs.com/sdk/3.11.0/email.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #e91e63;
+            --accent: #ff1493;
+            --dark: #2d1b2e;
+            --light: #fff5f7;
+            --gold: #d4af37;
+            --text: #3d2633;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: linear-gradient(135deg, var(--light) 0%, #ffe4e9 100%);
+            color: var(--text);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Animated background elements */
+        .bg-decoration {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .heart-float {
+            position: absolute;
+            font-size: 2rem;
+            opacity: 0.1;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .heart-float:nth-child(1) { left: 10%; top: 20%; animation-delay: 0s; }
+        .heart-float:nth-child(2) { left: 80%; top: 30%; animation-delay: 1s; }
+        .heart-float:nth-child(3) { left: 20%; top: 60%; animation-delay: 2s; }
+        .heart-float:nth-child(4) { left: 85%; top: 70%; animation-delay: 1.5s; }
+        .heart-float:nth-child(5) { left: 15%; top: 80%; animation-delay: 2.5s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-30px) rotate(5deg); }
+        }
+
+        /* Main container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: slideDown 1s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+            font-weight: 800;
+        }
+
+        .subtitle {
+            font-size: clamp(0.95rem, 3vw, 1.2rem);
+            color: var(--text);
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        /* Quiz container */
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: clamp(2rem, 5vw, 3rem);
+            box-shadow: 0 20px 60px rgba(233, 30, 99, 0.15);
+            border: 2px solid rgba(233, 30, 99, 0.2);
+            animation: fadeIn 0.8s ease-out 0.3s both;
+            width: 100%;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            transition: width 0.4s ease;
+        }
+
+        /* Question styles */
+        .question-number {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .question-text {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(1.5rem, 5vw, 2.2rem);
+            color: var(--text);
+            margin-bottom: 2rem;
+            font-weight: 700;
+        }
+
+        /* Options grid */
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 640px) {
+            .options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .option {
+            padding: 1.25rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: clamp(0.95rem, 3vw, 1.1rem);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: #fff5f7;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(233, 30, 99, 0.2);
+        }
+
+        .option.selected {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            border-color: var(--accent);
+            transform: scale(1.05);
+        }
+
+        /* Yes/No buttons for final question */
+        .yes-no-container {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            min-height: 100px;
+        }
+
+        .btn-yes, .btn-no {
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-yes {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+        }
+
+        .btn-yes:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.4);
+        }
+
+        .btn-no {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            position: fixed;
+        }
+
+        .btn-no:hover {
+            background: #fff5f7;
+        }
+
+        @keyframes dance {
+            0% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(30px) rotate(-15deg); }
+            50% { transform: translateX(-30px) rotate(15deg); }
+            75% { transform: translateX(30px) rotate(-15deg); }
+            100% { transform: translateX(0) rotate(0deg); }
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: skewX(0deg); }
+            25% { transform: skewX(8deg); }
+            50% { transform: skewX(-8deg); }
+            75% { transform: skewX(8deg); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scaleY(1); }
+            50% { transform: translateY(-20px) scaleY(0.9); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-no.dancing {
+            animation: dance 0.6s infinite, wiggle 0.8s infinite, bounce 0.7s infinite !important;
+        }
+
+        .btn-no.spinning {
+            animation: spin 0.4s linear infinite !important;
+        }
+
+        /* Navigation buttons */
+        .nav-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .btn-next, .btn-submit {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.3);
+        }
+
+        .btn-next:hover, .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(233, 30, 99, 0.4);
+        }
+
+        .btn-prev {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-prev:hover {
+            background: #fff5f7;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Hidden class */
+        .hidden {
+            display: none;
+        }
+
+        /* Modal/Popup styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-content h2 {
+            color: var(--primary);
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-content p {
+            font-size: 1.1rem;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .modal-content .emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.3);
+        }
+
+        .modal-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Result screen */
+        .result-screen {
+            text-align: center;
+            animation: popIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0) rotate(-20deg);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .result-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .result-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .result-message {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: var(--text);
+            margin-bottom: 2rem;
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.3);
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .btn-restart:hover {
+            transform: scale(1.05);
+        }
+
+        /* Email setup note */
+        .email-setup {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(233, 30, 99, 0.9);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            max-width: 300px;
+            z-index: 1000;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .container {
+                padding: 15px;
+                padding-top: 1rem;
+            }
+
+            .quiz-container {
+                padding: 1.5rem;
+                border-radius: 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .question-text {
+                font-size: 1.3rem;
+            }
+
+            .yes-no-container {
+                gap: 1rem;
+                min-height: 80px;
+            }
+
+            .btn-yes, .btn-no {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .email-setup {
+                bottom: 10px;
+                right: 10px;
+                max-width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-decoration">
+        <div class="heart-float">💕</div>
+        <div class="heart-float">💖</div>
+        <div class="heart-float">💗</div>
+        <div class="heart-float">💝</div>
+        <div class="heart-float">💓</div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>💕 Valentine's Quiz</h1>
+            <p class="subtitle">Let's see how well we know each other!</p>
+        </header>
+
+        <div class="quiz-container">
+            <!-- Quiz Screen -->
+            <div id="quizScreen" class="quiz-screen">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <div class="question-number" id="questionNumber"></div>
+                <div class="question-text" id="questionText"></div>
+
+                <div id="optionsContainer" class="options"></div>
+
+                <div id="yesNoContainer" class="yes-no-container hidden">
+                    <button class="btn-yes" id="yesBtn">Yes 💕</button>
+                    <button class="btn-no" id="noBtn">No 💔</button>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="btn btn-prev" id="prevBtn" disabled>← Previous</button>
+                    <button class="btn btn-next" id="nextBtn" disabled>Next →</button>
+                    <button class="btn btn-submit hidden" id="submitBtn">Submit 💌</button>
+                </div>
+            </div>
+
+            <!-- Result Screen -->
+            <div id="resultScreen" class="result-screen hidden">
+                <div class="result-icon" id="resultIcon"></div>
+                <div class="result-text" id="resultText"></div>
+                <div class="result-message" id="resultMessage"></div>
+                <button class="btn-restart" id="restartBtn">Take Quiz Again 🔄</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wrong Answer Modal -->
+    <div id="wrongAnswerModal" class="modal">
+        <div class="modal-content">
+            <div class="emoji">🌙</div>
+            <h2>Meet Me At Night</h2>
+            <p>We need to talk... 😒</p>
+            <button class="modal-button" onclick="closeWrongAnswerModal()">Okay, Ji 💕</button>
+        </div>
+    </div>
+
+    <!-- Kiss Question Modal -->
+    <div id="kissModal" class="modal">
+        <div class="modal-content">
+            <div class="emoji">😳</div>
+            <h2>Noted! 💋</h2>
+            <p>Be ready next time... 😘</p>
+            <button class="modal-button" onclick="closeKissModal()">I'm Ready 😳</button>
+        </div>
+    </div>
+
+    <!-- <div class="email-setup">
+        ⚙️ To enable email notifications, update your email in the code (see comments in JS)
+    </div> -->
+            <script type="text/javascript"
+        src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js">
+</script>
+    <script>
+        // ============ EMAIL CONFIGURATION ============
+        // To enable email notifications:
+        // 1. Go to https://www.emailjs.com/
+        // 2. Create a free account
+        // 3. Create an email service and get your SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY
+        // 4. Replace the values below:
+
+
+        const EMAIL_CONFIG = {
+            SERVICE_ID: "service_wr5sokl", // Get from EmailJS
+            TEMPLATE_ID: "template_ocox1ux", // Get from EmailJS
+            PUBLIC_KEY: "mhVb4hF21uYUOwW7J", // Get from EmailJS
+            RECIPIENT_EMAIL: "tiwariboss@gmail.com" // Your email address
+        };
+
+        // Initialize EmailJS
+        if (EMAIL_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY_HERE") {
+            emailjs.init(EMAIL_CONFIG.PUBLIC_KEY);
+        }
+
+        // ============ QUIZ CONFIGURATION ============
+        const questions = [
+            {
+                question: "What's our favorite spot? 🌍",
+                type: "multiple",
+                options: ["🏖️ Beach", "🏠 Home", "🕉️ Mandir", "🗺️ Somewhere new"],
+                correctAnswer: 1, // Home
+            },
+            {
+                question: "What's the first thing I notice about you? ✨",
+                type: "multiple",
+                options: ["😊 Your smile", "👀 Your eyes", "💬 Your voice", "❤️ Your heart"],
+                correctAnswer: 3, // Your heart
+            },
+            {
+                question: "How many times do I think about you daily? 💭",
+                type: "multiple",
+                options: ["🕐 A few times", "🔄 Many times", "♾️ All the time", "🌙 Even in my dreams"],
+                correctAnswer: 3, // Even in my dreams
+            },
+            {
+                question: "What's our best memory together? 🎬",
+                type: "multiple",
+                options: ["🎭 First meeting", "😄 Laughing together", "🌙 Late night talks", "🌅 A perfect day"],
+                correctAnswer: 3, // A perfect day
+            },
+            {
+                question: "Where do you want me to kiss you? 💋",
+                type: "multiple",
+                options: ["👄 Lips", "💝 Chest", "😽 Forehead", "🥰 Cheeks"],
+                correctAnswer: -1, // No correct answer
+            },
+            {
+                question: "Will you be my Valentine? 💍",
+                type: "yes-no",
+                options: [],
+            }
+        ];
+
+        let currentQuestion = 0;
+        let answers = [];
+        let noBtnClickCount = 0;
+
+        const quizScreen = document.getElementById('quizScreen');
+        const resultScreen = document.getElementById('resultScreen');
+        const questionNumber = document.getElementById('questionNumber');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const yesNoContainer = document.getElementById('yesNoContainer');
+        const progressFill = document.getElementById('progressFill');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const wrongAnswerModal = document.getElementById('wrongAnswerModal');
+        const kissModal = document.getElementById('kissModal');
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            questionNumber.textContent = `Question ${currentQuestion + 1} of ${questions.length}`;
+            questionText.textContent = q.question;
+
+            // Update progress bar
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            progressFill.style.width = progress + '%';
+
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            yesNoContainer.classList.add('hidden');
+
+            if (q.type === 'multiple') {
+                q.options.forEach((option, index) => {
+                    const button = document.createElement('div');
+                    button.className = 'option';
+                    button.textContent = option;
+                    if (answers[currentQuestion] === index) {
+                        button.classList.add('selected');
+                    }
+                    button.addEventListener('click', () => selectOption(index));
+                    optionsContainer.appendChild(button);
+                });
+                submitBtn.classList.add('hidden');
+            } else if (q.type === 'yes-no') {
+                yesNoContainer.classList.remove('hidden');
+                submitBtn.classList.remove('hidden');
+                nextBtn.classList.add('hidden');
+                resetNoButton();
+            }
+
+            // Update button states
+            prevBtn.disabled = currentQuestion === 0;
+            nextBtn.disabled = answers[currentQuestion] === undefined;
+
+            if (currentQuestion === questions.length - 1) {
+                nextBtn.classList.add('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+            }
+        }
+
+        function selectOption(index) {
+            answers[currentQuestion] = index;
+            const options = document.querySelectorAll('.option');
+            options.forEach((opt, i) => {
+                opt.classList.toggle('selected', i === index);
+            });
+            nextBtn.disabled = false;
+
+            // Check answer
+            const q = questions[currentQuestion];
+            if (q.correctAnswer !== -1) { // If there's a correct answer
+                if (index === q.correctAnswer) {
+                    // Correct answer - just update next button
+                    nextBtn.disabled = false;
+                } else {
+                    // Wrong answer - show modal and send email
+                    setTimeout(() => {
+                        showWrongAnswerModal();
+                        sendEmailNotification(currentQuestion, index, false);
+                    }, 500);
+                }
+            } else {
+                // No correct answer (kiss question)
+                setTimeout(() => {
+                    showKissModal();
+                    sendEmailNotification(currentQuestion, index, false);
+                }, 500);
+            }
+        }
+
+        function resetNoButton() {
+            noBtn.style.position = 'fixed';
+            noBtn.style.left = '50%';
+            noBtn.style.top = '50%';
+            noBtn.style.transform = 'translate(-50%, -50%)';
+            noBtn.classList.remove('dancing', 'spinning');
+            noBtnClickCount = 0;
+            noBtn.textContent = 'No 💔';
+        }
+
+        // Make "No" button dance and escape
+        noBtn.addEventListener('mouseenter', () => {
+            if (!yesNoContainer.classList.contains('hidden')) {
+                noBtn.classList.add('dancing');
+                noBtnClickCount = 0;
+            }
+        });
+
+        noBtn.addEventListener('mouseleave', () => {
+            noBtn.classList.remove('dancing');
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!yesNoContainer.classList.contains('hidden') && noBtn.classList.contains('dancing')) {
+                const rect = noBtn.getBoundingClientRect();
+                const btnCenterX = rect.left + rect.width / 2;
+                const btnCenterY = rect.top + rect.height / 2;
+
+                const distance = Math.sqrt(
+                    Math.pow(e.clientX - btnCenterX, 2) +
+                    Math.pow(e.clientY - btnCenterY, 2)
+                );
+
+                // If cursor gets too close, button escapes
+                if (distance < 150) {
+                    const angle = Math.atan2(e.clientY - btnCenterY, e.clientX - btnCenterX);
+                    const escapeDistance = Math.random() * 250 + 200;
+                    const newX = Math.cos(angle) * escapeDistance;
+                    const newY = Math.sin(angle) * escapeDistance;
+
+                    // Keep button within viewport with padding
+                    const padding = 20;
+                    const maxX = window.innerWidth - rect.width - padding;
+                    const maxY = window.innerHeight - rect.height - padding;
+                    
+                    const finalX = Math.max(padding, Math.min(maxX, btnCenterX + newX - rect.width / 2));
+                    const finalY = Math.max(padding, Math.min(maxY, btnCenterY + newY - rect.height / 2));
+
+                    noBtn.style.left = finalX + 'px';
+                    noBtn.style.top = finalY + 'px';
+                    noBtn.classList.add('spinning');
+                    
+                    setTimeout(() => {
+                        noBtn.classList.remove('spinning');
+                        noBtn.classList.add('dancing');
+                    }, 400);
+                }
+            }
+        });
+
+        yesBtn.addEventListener('click', () => {
+            answers[currentQuestion] = 'yes';
+            sendEmailNotification(currentQuestion, 'yes', true);
+            showResult(true);
+        });
+
+        noBtn.addEventListener('click', () => {
+            noBtnClickCount++;
+            noBtn.textContent = noBtnClickCount > 5 ? 'Say yes! 💕' : 'Try again 😊';
+            
+            // After multiple clicks, it finally accepts
+            if (noBtnClickCount > 8) {
+                noBtn.classList.remove('dancing', 'spinning');
+                answers[currentQuestion] = 'no';
+                sendEmailNotification(currentQuestion, 'no', false);
+                showResult(false);
+            } else {
+                // Do a spin on click
+                noBtn.classList.remove('dancing');
+                noBtn.classList.add('spinning');
+                setTimeout(() => {
+                    noBtn.classList.remove('spinning');
+                    noBtn.classList.add('dancing');
+                }, 400);
+            }
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                loadQuestion();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentQuestion < questions.length - 1) {
+                currentQuestion++;
+                loadQuestion();
+            }
+        });
+
+        submitBtn.addEventListener('click', () => {
+            if (answers[currentQuestion] === 'yes') {
+                showResult(true);
+            } else {
+                alert('Please answer the question first! 💕');
+            }
+        });
+
+        function showWrongAnswerModal() {
+            wrongAnswerModal.classList.add('show');
+        }
+
+        function closeWrongAnswerModal() {
+            wrongAnswerModal.classList.remove('show');
+        }
+
+        function showKissModal() {
+            kissModal.classList.add('show');
+        }
+
+        function closeKissModal() {
+            kissModal.classList.remove('show');
+        }
+
+        function showResult(isYes) {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            if (isYes) {
+                resultScreen.innerHTML = `
+                    <div class="result-icon">💕</div>
+                    <div class="result-text">YES! I'm the Happiest! 🥳</div>
+                    <div class="result-message">
+                        You've just made me the happiest person in the world! 
+                        I can't wait to celebrate this special day with you. 
+                        Every moment with you is a treasure, and I'm so grateful 
+                        to have you in my life. Let's make this Valentine's Day 
+                        unforgettable together! 💕
+                    </div>
+                    <button class="btn-restart" id="restartBtn">Let's celebrate! 🎉</button>
+                `;
+                createConfetti();
+            } else {
+                resultScreen.innerHTML = `
+                    <div class="result-icon">😔</div>
+                    <div class="result-text">That's okay... for now 💔</div>
+                    <div class="result-message">
+                        Maybe you need more time, and that's alright! 
+                        But know that my heart will always be waiting for you. 
+                        I'll keep trying to win your heart, because you're worth it. 
+                        Every day with you is a blessing, and I believe in us. 
+                        Always yours... 💕
+                    </div>
+                    <button class="btn-restart" id="restartBtn">Take Quiz Again 🔄</button>
+                `;
+            }
+
+            document.getElementById('restartBtn').addEventListener('click', restartQuiz);
+        }
+
+        function restartQuiz() {
+            currentQuestion = 0;
+            answers = [];
+            noBtnClickCount = 0;
+            resultScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function createConfetti() {
+            const colors = ['❤️', '💕', '💖', '💗', '💝', '✨', '🌹'];
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.innerHTML = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.position = 'fixed';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = '-20px';
+                confetti.style.fontSize = Math.random() * 20 + 20 + 'px';
+                confetti.style.pointerEvents = 'none';
+                confetti.style.zIndex = '999';
+                document.body.appendChild(confetti);
+
+                const duration = Math.random() * 3 + 2;
+                const xOffset = (Math.random() - 0.5) * 200;
+
+                const keyframes = `
+                    @keyframes confettiFall${i} {
+                        to {
+                            transform: translateY(100vh) translateX(${xOffset}px) rotate(360deg);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                const style = document.createElement('style');
+                style.textContent = keyframes;
+                document.head.appendChild(style);
+
+                confetti.style.animation = `confettiFall${i} ${duration}s ease-in forwards`;
+                setTimeout(() => confetti.remove(), duration * 1000);
+            }
+        }
+
+        // ============ EMAIL NOTIFICATION FUNCTION ============
+        function sendEmailNotification(questionIndex, selectedIndex, isCorrect) {
+            const q = questions[questionIndex];
+            let answerText = '';
+            
+            if (q.type === 'multiple') {
+                answerText = q.options[selectedIndex] || 'Not answered';
+            } else if (q.type === 'yes-no') {
+                answerText = selectedIndex === 'yes' ? 'YES! 💕' : 'NO 💔';
+            }
+
+            const emailParams = {
+                to_email: EMAIL_CONFIG.RECIPIENT_EMAIL,
+                question: q.question,
+                selected_answer: answerText,
+                correct_answer: q.correctAnswer !== -1 ? q.options[q.correctAnswer] : 'No correct answer',
+                is_correct: isCorrect ? 'Yes ✅' : 'No ❌',
+                timestamp: new Date().toLocaleString()
+            };
+
+            // Only send email if EmailJS is configured
+            if (EMAIL_CONFIG.PUBLIC_KEY !== "YOUR_PUBLIC_KEY_HERE") {
+                emailjs.send(
+                    EMAIL_CONFIG.SERVICE_ID,
+                    EMAIL_CONFIG.TEMPLATE_ID,
+                    emailParams
+                ).then(
+                    function(response) {
+                        console.log('Email sent successfully:', response.status, response.text);
+                    },
+                    function(error) {
+                        console.log('Email sending failed:', error);
+                    }
+                );
+            } else {
+                console.log('Quiz Answer:', emailParams);
+            }
+        }
+
+        // Load first question on page load
+        window.addEventListener('load', loadQuestion);
+    </script>
+</body>
+</html>
